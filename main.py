@@ -2,11 +2,12 @@ import os
 import pygame
 import math
 import numpy
+import random
 
 pygame.font.init()
 
-WIDTH, HEIGHT = 288, 512
-SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
+WINDOW_WIDTH, WINDOW_HEIGHT = 288, 512
+SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Flappy bird")
 
 clock = pygame.time.Clock()
@@ -48,6 +49,15 @@ class Bird():
     def update(self, time):
         y += - basevely * time + 1/2 * g**2
         angel = -numpy.arctan((-vel + g * time)/vel) /math.pi * 180
+
+
+class Pipe():
+    width = 60
+    space = 100
+
+    def __init__(self):
+        x = ramdom.ranint(0, WINDOW_HEIGHT-1-space)
+    pass
 
 
 running = True
