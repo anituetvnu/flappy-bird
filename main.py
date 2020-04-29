@@ -16,6 +16,7 @@ class Bird():
         self.y = config.BASE_Y
         self.time = 0
         self.start = False
+        self.end = False
 
     def update(self, time):
             self.y += - config.BASE_VEL_Y * time + 1/2 * g * time**2
@@ -27,8 +28,14 @@ class Bird():
     def begin(self):
         self.start = True
 
+    def die(self):
+        self.end = True
+
     def is_started(self):
         return self.start
+
+    def is_ended(self):
+        return self.end
 
 class Pipe():
  
@@ -81,6 +88,9 @@ if __name__ == "__main__":
     BASE_MASK = pygame.mask.from_surface(BASE_IMAGE)
     BASE_POS = (0, 400)
 
+    START_GAME_IMAGE = pygame.image.load(os.path.join("assets", "message.png"))
+    GAME_OVER_IMAGE = pygame.image.load(os.path.join("assets", "gameover.png"))
+
     DOWN_PIPE_IMAGE = pygame.image.load(os.path.join("assets", "pipe-green.png")).convert_alpha()
     DOWN_PIPE_MASK = pygame.mask.from_surface(DOWN_PIPE_IMAGE)
     UP_PIPE_IMAGE = pygame.transform.rotate(DOWN_PIPE_IMAGE, 180)
@@ -94,7 +104,7 @@ if __name__ == "__main__":
 
     BIRD_MASK = pygame.mask.from_surface(BIRD_IMAGE[0])
 
-
+    # game loop
     running = True
     while running:
         clock.tick(24)
@@ -104,14 +114,12 @@ if __name__ == "__main__":
                 running = False
             if event.type == pygame.KEYDOWN:
                 bird.begin()
-                # print('begin')
-                # print(bird.is_started())
-                # print("A keystoke is pressed")
-                # print('last_click:{} this_click:{}'.format(last_click, current_time))
                 last_click = current_time
+
+        # genarate pipe
         if current_time//3000 > len(pipes):
             pipes.append(Pipe(current_time))
-            # print('created {} pipes'.format(len(pipes)))
+
 
         # update pipe and bird
         tick += 1
@@ -127,8 +135,13 @@ if __name__ == "__main__":
             distance_to_down_pipe = (math.floor(pipe.down_pipe()[0] - bird.x), math.floor(bird.y - pipe.down_pipe()[1]))
             if DOWN_PIPE_MASK.overlap(BIRD_MASK, distance_to_down_pipe):
                 print('hit_down_pipe')
+                bird.die()
             if UP_PIPE_MASK.overlap(BIRD_MASK, distance_to_up_pipe):
                 print('hit_up_pipe')
+                bird.die()
+        if BASE_MASK.overlap(BIRD_MASK, (math.floor(bird.x), math.floor(BASE_POS[1]-bird.y))):
+            print('hit_base')
+            bird.die()
 
         # update screen
         SCREEN.blit(BACKGROUND_IMAGE[0], (0, 0))
@@ -136,7 +149,11 @@ if __name__ == "__main__":
             SCREEN.blit(UP_PIPE_IMAGE, pipe.up_pipe())
             SCREEN.blit(DOWN_PIPE_IMAGE, pipe.down_pipe())
         SCREEN.blit(BASE_IMAGE, BASE_POS)
-
         SCREEN.blit(pygame.transform.rotate(BIRD_IMAGE[tick % 3], bird.angel), bird.position())
+
+        # start game or game over screen
+        if not bird.is_started() and not bird.is_ended():
+            SCREEN.blit(START_GAME_IMAGE, (52, 123))
+        if bird.is_started() and bird.is_ended():
+            SCREEN.blit(GAME_OVER_IMAGE, (48, 180))
         pygame.display.update()
- 
