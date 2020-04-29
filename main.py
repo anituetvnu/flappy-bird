@@ -15,14 +15,20 @@ class Bird():
         self.x = config.BASE_X
         self.y = config.BASE_Y
         self.time = 0
+        self.start = False
 
     def update(self, time):
-        self.y += - config.BASE_VEL_Y * time + 1/2 * g * time**2
-        self.angel = -numpy.arctan((-vel + self.g * time)/vel) /math.pi * 180
+            self.y += - config.BASE_VEL_Y * time + 1/2 * g * time**2
+            self.angel = -numpy.arctan((-vel + self.g * time)/vel) /math.pi * 180
 
     def position(self):
         return (self.x, self.y)
 
+    def begin(self):
+        self.start = True
+
+    def is_started(self):
+        return self.start
 
 class Pipe():
  
@@ -48,13 +54,22 @@ class Pipe():
         return (self.x, self.y + config.PIPE_SPACE)
 
 
-
 if __name__ == "__main__":
+ 
+    # init pygame,val, ..
     pygame.font.init()
-
     WINDOW_WIDTH, WINDOW_HEIGHT = 288, 512
     SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("Flappy bird")
+    clock = pygame.time.Clock()
+    tick = 1
+    vel = config.BASE_VEL_Y
+    last_click = 0
+    y = config.BASE_Y
+    x = config.BASE_X
+    g = config.BASE_G
+    pipes = []
+    bird = Bird()
 
     # load images
     BACKGROUND_IMAGE = [
@@ -80,15 +95,6 @@ if __name__ == "__main__":
     BIRD_MASK = pygame.mask.from_surface(BIRD_IMAGE[0])
 
 
-    clock = pygame.time.Clock()
-    tick = 1
-    vel = config.BASE_VEL_Y
-    last_click = 0
-    y = config.BASE_Y
-    x = config.BASE_X
-    g = config.BASE_G
-    pipes = []
-    bird = Bird()
     running = True
     while running:
         clock.tick(24)
@@ -97,24 +103,40 @@ if __name__ == "__main__":
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
-                print("A keystoke is pressed")
-                print('last_click:{} this_click:{}'.format(last_click, current_time))
+                bird.begin()
+                # print('begin')
+                # print(bird.is_started())
+                # print("A keystoke is pressed")
+                # print('last_click:{} this_click:{}'.format(last_click, current_time))
                 last_click = current_time
         if current_time//3000 > len(pipes):
             pipes.append(Pipe(current_time))
-            print('created {} pipes'.format(len(pipes)))
+            # print('created {} pipes'.format(len(pipes)))
 
+        # update pipe and bird
+        tick += 1
+        time = (current_time - last_click)/1000
+        if bird.is_started():
+            bird.update(time)
+        for pipe in pipes:
+            pipe.update(current_time) 
+
+        # check collision
+        for pipe in pipes:
+            distance_to_up_pipe = (math.floor(pipe.up_pipe()[0] - bird.x), math.floor(bird.y - pipe.up_pipe()[1]))
+            distance_to_down_pipe = (math.floor(pipe.down_pipe()[0] - bird.x), math.floor(bird.y - pipe.down_pipe()[1]))
+            if DOWN_PIPE_MASK.overlap(BIRD_MASK, distance_to_down_pipe):
+                print('hit_down_pipe')
+            if UP_PIPE_MASK.overlap(BIRD_MASK, distance_to_up_pipe):
+                print('hit_up_pipe')
+
+        # update screen
         SCREEN.blit(BACKGROUND_IMAGE[0], (0, 0))
         for pipe in pipes:
-            # print(pipe)
-            pipe.update(current_time)
             SCREEN.blit(UP_PIPE_IMAGE, pipe.up_pipe())
             SCREEN.blit(DOWN_PIPE_IMAGE, pipe.down_pipe())
         SCREEN.blit(BASE_IMAGE, BASE_POS)
-        tick += 1
-        time = (current_time - last_click)/1000
-        bird.update(time)
+
         SCREEN.blit(pygame.transform.rotate(BIRD_IMAGE[tick % 3], bird.angel), bird.position())
-        # print('bird_x:{}, bird_y{}, time:{}'.format(bird.x, bird.y, time))
         pygame.display.update()
  

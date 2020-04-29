@@ -1,6 +1,6 @@
 # Bird settings
 BASE_X = 30
-BASE_Y = 300
+BASE_Y = 200
 BASE_G = 70
 BASE_VEL = 20
 BASE_VEL_Y =30
